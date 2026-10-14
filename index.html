@@ -504,7 +504,7 @@ footer p { margin: 0; max-width: 100ch; }
     </div>
     <div class="card verdicts" id="verdicts"></div>
     <div class="card">
-      <div class="card-head"><div><h2 class="card-title">Changes by Module</h2><p class="card-sub">Select a module to see its changes.</p></div><div class="legend" id="impLegend"></div></div>
+      <div class="card-head"><div><h2 class="card-title">Changes by Product</h2><p class="card-sub">Select a product to see its changes.</p></div><div class="legend" id="impLegend"></div></div>
       <div class="bars" id="bars"></div>
     </div>
   </section>
@@ -535,7 +535,7 @@ footer p { margin: 0; max-width: 100ch; }
             <option value="impact">Most Urgent First</option>
             <option value="date">Effective Date</option>
             <option value="rev">Recently Updated</option>
-            <option value="module">Module</option>
+            <option value="module">Product</option>
             <option value="az">A to Z</option>
           </select>
           <button class="btn" id="copyTable" type="button" title="Copies the filtered list as a table you can paste into Excel">
@@ -719,7 +719,7 @@ const state = {
   rel: store.get("rel", DATA.releases[0].key),
   view: "brief",
   q: "", sort: "impact", shown: 50,
-  f: { imp: new Set(), story: new Set(), p: new Set(), theme: new Set(), aud: new Set(), how: new Set(), lc: new Set(), ty: new Set() },
+  f: { imp: new Set(), story: new Set(), p: new Set(), a: new Set(), theme: new Set(), aud: new Set(), how: new Set(), lc: new Set(), ty: new Set() },
   ids: null,
   watch: new Set(store.get("watch", [])),
   order: [], openId: null
@@ -896,7 +896,9 @@ $("#themeCards").addEventListener("click", e => { const b = e.target.closest("[d
 const FACETS = [
   { k: "imp", h: "Status", get: x => [x.imp], label: v => IMPACT[v].label, order: IMPACT_ORDER },
   { k: "story", h: "In the Exec Brief", get: x => x.stories, label: v => R().storyById.get(v)?.headline || v, order: () => (R().brief?.storylines || []).map(s => s.id) },
-  { k: "p", h: "Module", get: x => x.p, label: v => v },
+  { k: "p", h: "Product", get: x => x.p, label: v => v },
+
+  { k: "a", h: "Module", get: x => x.a, label: v => v },
   { k: "theme", h: "Topic", get: x => x.themes, label: v => THEMES[v].label, order: Object.keys(THEMES) },
   { k: "aud", h: "Who Notices", get: x => x.aud, label: v => AUD[v].label, order: Object.keys(AUD) },
   { k: "how", h: "How It Turns On", get: x => [x.how], label: v => v },
@@ -1011,7 +1013,7 @@ $("#copyBrief").addEventListener("click", () => {
   const lines = [`SuccessFactors release watchlist: ${plural(w.length, "change")}`, ""];
   for (const { x, rel } of w) {
     lines.push(`[${IMPACT[x.imp].label}] ${x.t} (${rel.id})`);
-    lines.push(`  Modules: ${x.p.join(", ")}${x.v ? " | Effective: " + fmtD(x.v) : ""}`);
+    lines.push(`  Product: ${x.p.join(", ")}${x.a.length ? " | Module: " + x.a.join(", ") : ""}${x.v ? " | Effective: " + fmtD(x.v) : ""}`);
     lines.push(`  What it means: ${meaning(x)}`);
     if (x.url) lines.push(`  SAP documentation: ${x.url}`);
     lines.push("");
@@ -1050,9 +1052,9 @@ function copy(text, msg) {
   if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(() => toast(msg), fallback); else fallback();
 }
 $("#copyTable").addEventListener("click", () => {
-  const cols = ["Status", "Title", "Modules", "Description", "SAP action", "Enablement", "Lifecycle", "Type", "Effective", "Reference", "Document ID", "In exec brief", "SAP link"];
+  const cols = ["Status", "Title", "Product", "Module", "Description", "SAP action", "Enablement", "Lifecycle", "Type", "Effective", "Reference", "Document ID", "In exec brief", "SAP link"];
   const clean = s => String(s ?? "").replace(/[\t\n\r]+/g, " ");
-  const rows = filtered().map(x => [IMPACT[x.imp].label, x.t, x.p.join(", "), x.d, x.ac, x.en, x.lc, x.ty, x.v, x.ref, x.id, x.stories.map(s => R().storyById.get(s)?.headline).join("; "), x.url].map(clean).join("\t"));
+  const rows = filtered().map(x => [IMPACT[x.imp].label, x.t, x.p.join(", "), x.a.join(", "), x.d, x.ac, x.en, x.lc, x.ty, x.v, x.ref, x.id, x.stories.map(s => R().storyById.get(s)?.headline).join("; "), x.url].map(clean).join("\t"));
   copy([cols.join("\t"), ...rows].join("\n"), `${fmtN(rows.length)} rows copied. Paste into Excel.`);
 });
 let toastT;
@@ -1080,8 +1082,8 @@ function openItem(id) {
       <button class="btn" type="button" id="copyLink">Copy Link</button>
     </div>
     <dl class="facts">
-      <dt>Modules</dt><dd>${esc(x.p.join(", ") || "Not stated")}</dd>
-      <dt>Area</dt><dd>${esc(x.a.join(", ") || "Not stated")}</dd>
+      <dt>Product</dt><dd>${esc(x.p.join(", ") || "Not stated")}</dd>
+      <dt>Module</dt><dd>${esc(x.a.join(", ") || "Not stated")}</dd>
       <dt>Features</dt><dd>${esc(x.c.join(", ") || "Not stated")}</dd>
       <dt>Who notices</dt><dd>${esc(x.aud.map(a => AUD[a].label).join(", "))}</dd>
       <dt>How it turns on</dt><dd>${esc(x.en || "Not stated")}</dd>
