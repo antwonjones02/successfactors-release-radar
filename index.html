@@ -1163,9 +1163,13 @@ function setView(v) {
   $("#view-dash").hidden = v !== "dash";
   navLinks.forEach(a => a.classList.toggle("on", v === "brief" && a.dataset.view === "brief"));
 }
+
+const HOME = DATA.public ? "overview" : "brief";
+document.querySelector(".brand").setAttribute("href", "#" + HOME);
 function route() {
   const h = location.hash.slice(1);
-  if (!h || h === "brief") { setView("brief"); window.scrollTo(0, 0); return; }
+  if ((!h && HOME === "brief") || h === "brief") { setView("brief"); window.scrollTo(0, 0); return; }
+  if (!h) { setView("dash"); window.scrollTo(0, 0); navLinks.forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#overview")); return; }
   const rel = DATA.releases.find(r => r.byId.has(h));
   if (rel) { if (rel.key !== state.rel) { state.rel = rel.key; renderAll(); } openItem(h); return; }
   const el = document.getElementById(h);
